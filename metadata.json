@@ -1,0 +1,37 @@
+{
+  "id": "sophia",
+  "name": "S.O.P.H.I.A.",
+  "author": "@LlamaYeYe",
+  "version": "3.36.0",
+  "description": "S.O.P.H.I.A. Yes Man release build. Direct RUN of APP.JS now self-registers APPINFO/PROJECT_SOPHIA.info so backing out returns to MISC with S.O.P.H.I.A. available as an installed holotape. Keeps VOICE51 trimmed bank, MODE 4K extraction, Pip.statusIdx STATUS tracking, park/resume lifecycle, and no Sophia diagnostic files.",
+  "previews": [],
+  "type": "app",
+  "readme": "README.md",
+  "storage": [
+    {
+      "name": "HOLO/Project_Sophia/APP.JS",
+      "url": "assets/APP.JS"
+    },
+    {
+      "name": "HOLO/Project_Sophia/YES_MAN_CONFIG.JSON",
+      "url": "assets/YES_MAN_CONFIG.JSON"
+    },
+    {
+      "name": "HOLO/Project_Sophia/YES_MAN_PLAY.WAV",
+      "url": "assets/YES_MAN_PLAY.WAV"
+    },
+    {
+      "name": "HOLO/Project_Sophia/YES_MAN_SERVICE.JS",
+      "url": "assets/YES_MAN_SERVICE.JS"
+    },
+    {
+      "name": "HOLO/Project_Sophia/YES_MAN_VOICE.BIN",
+      "url": "assets/YES_MAN_VOICE.BIN"
+    },
+    {
+      "name": "HOLO/Project_Sophia/YES_MAN_VOICE.IDX",
+      "url": "assets/YES_MAN_VOICE.IDX"
+    }
+  ],
+  "storageOptional": []
+}

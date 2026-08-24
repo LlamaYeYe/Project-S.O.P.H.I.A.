@@ -1,0 +1,12 @@
+V3.2
+- Yield voice-bank extraction in 1KB chunks to reduce UI stalls.
+- Extend follow-up delay range from 1-20 seconds to 1-30 seconds.
+- Preserve max 3 responses per unchanged highlight and all silence rules.
+
+3.0.0 (2026-08-23)
+- Rebuilt Yes Man voice bank from 72 user-selected recordings
+- Removed background knob1 ownership from the companion service
+- Removed interval-based STATUS watcher
+- Added max-three unchanged-highlight reactions with random 1-20 second follow-ups
+- MAP, STATUS RAD, RADIO/FM and active-audio silence preserved
+- Kept single-bank PCM extraction architecture
