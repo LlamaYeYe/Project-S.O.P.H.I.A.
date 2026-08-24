@@ -29,3 +29,5 @@ Menus with Yes Man voice lines:
 - Notes
 - Fallout: New Vegas mode switch
 - Fallout 3 mode switch
+
+HOLO/Project_Sophia
