@@ -1,6 +1,6 @@
 # S.O.P.H.I.A. — Companion Pip-Boy Framework
 
-PROJECT S.O.P.H.I.A. / YES MAN and FISTO CURRENT RULES 
+PROJECT S.O.P.H.I.A. / YES MAN, FISTO, KL-E-O and MK II Stealth Suit CURRENT RULES
   
 - Uses a compact 51-line voice bank. 
 - Maximum 3 voice responses per supported menu visit. 
