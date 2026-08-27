@@ -2,7 +2,7 @@
 
 PROJECT S.O.P.H.I.A. / YES MAN, FISTO, KL-E-O and MK II Stealth Suit CURRENT RULES
   
-- Uses a compact 51-line voice bank. 
+- Uses a separate compact 51-line voice bank for each character. 
 - Maximum 3 voice responses per supported menu visit. 
 - First response is targeted for about 3 seconds after entering a menu.
 - After response 1 and response 2, the next response uses a fresh random 1–30 second delay.
