@@ -16,23 +16,20 @@
             "Andy - Mister Handy"
         ],
         /*
-         * This loader is intentionally compiled with Function().
-         * That keeps the persistent router outside the APP.JS closure so
-         * the holotape UI can be reclaimed after remove().
-         *
-         * The tiny locals inside this string intentionally mirror the
-         * compact, hardware-tested detached loader.
+         * Keep the router detached from the holotape UI closure, but compile
+         * the tiny loader only after the UI has been removed and defragmented.
+         * A compile failure is caught in normal APP.JS instead of surfacing
+         * the earlier Espruino dynamic-Function parser ERROR dialog.
          */
-        detachedRouterLoader = Function(
+        detachedRouterLoaderSource =
             "global.__SLT=0;" +
-            "try{" +
             "if(Pip.sleeping||Pip.menuChanging){" +
             "global.__SLT=setTimeout(global.__SLF,1800);" +
-            "return" +
+            "return;" +
             "}" +
             "if(global.__PipCoSophiaUi||global.__SR){" +
             "global.__SLF=0;" +
-            "return" +
+            "return;" +
             "}" +
             "var f=require('fs')," +
             "s=f.readFileSync('HOLO/PROJECT_SOPHIA/SOPHIA_ROUTER.JS')," +
@@ -40,23 +37,28 @@
             "r=q();" +
             "s=q=0;" +
             "global.__SLF=0;" +
-            "if(r&&r.kick)r.kick()" +
-            "}catch(e){" +
-            "global.__SLF=0;" +
-            "try{E.defrag()}catch(x){}" +
-            "}"
-        );
+            "if(r&&r.kick)r.kick();";
 
     let enabled = 0,
         activeCompanion = "YES_MAN",
         menuSelection = 0,
         selectedCompanionIndex = -1,
-        removed = 0;
+        removed = 0,
+        detachedRouterLoader = 0;
 
     function defragMemory() {
         try {
             E.defrag()
         } catch (error) {
+        }
+    }
+
+    function createDetachedRouterLoader() {
+        try {
+            return Function(detachedRouterLoaderSource)
+        } catch (error) {
+            defragMemory();
+            return 0
         }
     }
 
@@ -123,15 +125,24 @@
     }
 
     function scheduleRouterStart() {
-        if (!enabled) return;
+        if (!enabled || !detachedRouterLoader) {
+            global.__SLF = 0;
+            return
+        }
 
         try {
             if (global.__SLT) clearTimeout(global.__SLT)
         } catch (error) {
         }
 
+        /*
+         * remove() must return immediately so MISC or a physical
+         * STATS/ITEMS/DATA button can draw without S.O.P.H.I.A. work
+         * competing with the firmware transition.
+         */
         global.__SLF = detachedRouterLoader;
-        global.__SLT = setTimeout(detachedRouterLoader, 650)
+        global.__SLT = setTimeout(detachedRouterLoader, 1000);
+        detachedRouterLoader = 0
     }
 
     function drawHeader() {
@@ -288,7 +299,10 @@
 
         global.__PipCoSophiaUi = 0;
 
-        defragMemory();
+        /*
+         * No Function compilation and no E.defrag() happen here.
+         * Keep the firmware's menu-change hot path as small as possible.
+         */
         scheduleRouterStart()
     }
 
@@ -296,6 +310,13 @@
 
     stopBackgroundServices();
     loadConfig();
+
+    /*
+     * Compile the tiny detached loader while the holotape is already open,
+     * not while the user is trying to leave it. The loader source itself
+     * contains no try/catch, avoiding the prior Espruino parser failure.
+     */
+    detachedRouterLoader = createDetachedRouterLoader();
 
     Pip.onExclusive("knob1", onKnob1);
 
