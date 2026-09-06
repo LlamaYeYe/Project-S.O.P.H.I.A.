@@ -271,8 +271,7 @@
 
         try {
             if (Pip.sleeping || Pip.menuChanging) {
-                ownsAudio = 0;
-                audioUntil = 0;
+                if (Pip.menuChanging) stopOwnedAudio();
                 schedulePoll(1800);
                 return
             }
@@ -341,14 +340,12 @@
             contextKey = getContextKey();
 
             if (!contextKey) {
+                stopOwnedAudio();
+
                 activeContextKey = 0;
                 responseIndex = 0;
                 nextResponseAt = 0;
 
-                /*
-                 * RAD is intentionally silent, but remain alive while still
-                 * in STATUS so moving onward to EFF / CLK / ENG is detected.
-                 */
                 try {
                     if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) {
                         schedulePoll(300)
@@ -369,12 +366,16 @@
             currentTime = getTime();
 
             if (ownsAudio && currentTime < audioUntil) {
-                schedulePoll(
-                    Math.max(
-                        300,
-                        Math.floor((audioUntil - currentTime + .1) * 1000)
+                if (contextKey >= 10 && contextKey <= 13) {
+                    schedulePoll(200)
+                } else {
+                    schedulePoll(
+                        Math.max(
+                            300,
+                            Math.floor((audioUntil - currentTime + .1) * 1000)
+                        )
                     )
-                );
+                }
                 return
             }
 
@@ -416,12 +417,16 @@
             nextResponseAt = getTime() + 12;
 
             if (prepareAndPlay(lineNumber, statusOffset, contextKey)) {
-                schedulePoll(
-                    Math.max(
-                        700,
-                        Math.floor((audioUntil - getTime() + .15) * 1000)
+                if (contextKey >= 10 && contextKey <= 13) {
+                    schedulePoll(200)
+                } else {
+                    schedulePoll(
+                        Math.max(
+                            700,
+                            Math.floor((audioUntil - getTime() + .15) * 1000)
+                        )
                     )
-                )
+                }
             } else {
                 schedulePoll(1200)
             }
@@ -437,6 +442,7 @@
 
         try {
             if (Pip.sleeping || Pip.menuChanging) {
+                if (Pip.menuChanging) stopOwnedAudio();
                 schedulePoll(1800);
                 return
             }
@@ -462,9 +468,6 @@
             responseIndex = 0;
             nextResponseAt = 0;
 
-            /*
-             * Keep polling only for the intentionally silent STATUS RAD page.
-             */
             try {
                 if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) {
                     schedulePoll(300)
@@ -487,16 +490,9 @@
 
     function destroyVoiceEngine() {
         if (!active) return;
-
         active = 0;
-
         clearPollTimer();
-        stopOwnedAudio();
-
-        try {
-            E.defrag()
-        } catch (error) {
-        }
+        stopOwnedAudio()
     }
 
     const voiceEngineApi = {
@@ -505,6 +501,5 @@
     };
 
     schedulePoll(300);
-
     return voiceEngineApi
 });
