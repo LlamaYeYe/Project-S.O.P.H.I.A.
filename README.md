@@ -2,6 +2,8 @@
 
 Project S.O.P.H.I.A. is a companion voice framework for the Wand Company Pip-Boy 3000 with five selectable companions and contextual voices across supported menus.
 
+APPINFO/SOPHIA.info
+
 The current architecture separates the holotape UI from a detached navigation router and a transient voice engine. One shared S.O.P.H.I.A. runtime state object owns the detached lifecycle and is passed into the router; the router owns the voice-engine reference locally:
 
 - `APP.JS` — readable holotape UI and configuration source.
