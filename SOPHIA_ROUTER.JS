@@ -37,7 +37,7 @@
 
         return mode === 0 && menuX >= 0 && menuX < 5 ||
             mode === 1 && (menuX < 3 || menuX === 4) ||
-            mode === 2 && (menuX === 2 || menuX === 3)
+            mode === 2 && (menuX === 0 || menuX === 2 || menuX === 3)
     }
 
     function isCustomApp() {
@@ -84,12 +84,12 @@
             }
         }
 
-        global.__SE = 0;
-
-        try {
-            E.defrag()
-        } catch (error) {
-        }
+        /*
+         * Do not defragment while the firmware is entering MISC or another
+         * page. Memory is consolidated immediately before the next engine
+         * load instead.
+         */
+        global.__SE = 0
     }
 
     function loadVoiceEngine() {
@@ -115,6 +115,16 @@
         }
 
         try {
+            /*
+             * Consolidate memory here, after the destination page has already
+             * had time to render and only when S.O.P.H.I.A. is about to load
+             * its heavier voice engine.
+             */
+            try {
+                E.defrag()
+            } catch (error) {
+            }
+
             memory = process.memory();
 
             if (memory && memory.free < 2750) {
@@ -125,11 +135,6 @@
             }
 
             retryCount = 0;
-
-            try {
-                E.defrag()
-            } catch (error) {
-            }
 
             sourceCode = fs.readFileSync(appPath + "SOPHIA_VOICE_ENGINE.JS");
             engineFactory = Function("return " + sourceCode) ();
@@ -157,6 +162,13 @@
         if (!active) return;
 
         if (isTransitioning()) {
+            if (global.__SE && global.__SE.nav) {
+                try {
+                    global.__SE.nav()
+                } catch (error) {
+                }
+            }
+
             clearPendingTimer();
             pendingTimer = setTimeout(onNavigationChange, 1800);
             return
@@ -184,6 +196,14 @@
                 } catch (error) {
                     destroyVoiceEngine()
                 }
+            } else {
+                /*
+                 * Load through the existing low-memory gate and normal
+                 * 850 ms delay so DATA > Settings can detect an actual
+                 * Fallout 3 / New Vegas mode change without adding a
+                 * permanently resident service.
+                 */
+                pendingTimer = setTimeout(loadVoiceEngine, 850)
             }
 
             return
