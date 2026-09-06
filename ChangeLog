@@ -1,12 +1,22 @@
-V3.2
-- Yield voice-bank extraction in 1KB chunks to reduce UI stalls.
-- Extend follow-up delay range from 1-20 seconds to 1-30 seconds.
-- Preserve max 3 responses per unchanged highlight and all silence rules.
+1.0.0
+- Rebuilt directly from the user's mostly-working v2.3.1 Fisto-all-voices beautified baseline.
+- Added only the previously successful sleep/wake safety guards so S.O.P.H.I.A. does not extract audio, stop audio, or reload its router while the Pip-Boy is sleeping/waking or changing menus.
+- Added F3/NV mode-line handling without changing the original voice-context map: Items, Status, Notes, and Quests retain their original keys and behavior.
+- DATA > Settings is not added to q() and is not treated as a normal three-line voice category; an already-running engine is only kept alive there to observe a real NV/F3 change.
+- On a mode change S.O.P.H.I.A. does not call audioStop(), so the stock F3/NV theme can finish; the matching companion mode line is then played after stock audio is no longer active.
+- No v2.3.5/v2.3.6 DATA recovery, timing-window, memory-threshold, or broad router changes were carried forward.
+- Voice BIN/IDX/WAV assets, Fisto loudness, UI, normal menu mappings, memory threshold, and retry counts remain from v2.3.1.
 
-3.0.0 (2026-08-23)
-- Rebuilt Yes Man voice bank from 72 user-selected recordings
-- Removed background knob1 ownership from the companion service
-- Removed interval-based STATUS watcher
-- Added max-three unchanged-highlight reactions with random 1-20 second follow-ups
-- MAP, STATUS RAD, RADIO/FM and active-audio silence preserved
-- Kept single-bank PCM extraction architecture
+v2.3.1
+- Detached the persistent wake/router from the APP.JS lexical scope to release UI memory after closing S.O.P.H.I.A.
+- Fixed mode/menuX event values being confused with old wake start/stop commands.
+- Router has no timer in MISC or while another holotape is active.
+- Added bounded low-memory retry for first voice-engine activation.
+- Voice engine no longer owns mode/menuX listeners.
+- Preserved v2.3.0 synchronous 1 KB voice extraction, five companions, no MISC audio, and combined STATUS/ENG banks.
+
+v2.3.1 source-format packaging update
+- Beautified all normal JavaScript source files in beautifier.io/js-beautify style.
+- Kept compact device runtime files as .MIN.JS.
+- metadata.json installs those .MIN.JS files under the exact same on-device .JS names.
+- No runtime logic, voice data, offsets, Fisto loudness changes, timers, thresholds, paths, or memory footprint changed.

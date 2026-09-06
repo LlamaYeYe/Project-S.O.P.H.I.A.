@@ -2,36 +2,100 @@
   "id": "sophia",
   "name": "S.O.P.H.I.A.",
   "author": "@LlamaYeYe",
-  "version": "3.36.0",
-  "description": "S.O.P.H.I.A. Yes Man release build. Direct RUN of APP.JS now self-registers APPINFO/PROJECT_SOPHIA.info so backing out returns to MISC with S.O.P.H.I.A. available as an installed holotape. Keeps VOICE51 trimmed bank, MODE 4K extraction, Pip.statusIdx STATUS tracking, park/resume lifecycle, and no Sophia diagnostic files.",
+  "version": "1.0.0",
+  "description": "Detached-router low-RAM build. Fixes the auto-resume event/command collision and prevents the persistent wake callback from retaining the S.O.P.H.I.A. UI closure. Voice engine remains absent in MISC/other holotapes and auto-resumes on supported firmware pages.",
+  "icon": "assets/icon.png",
   "previews": [],
   "type": "app",
   "readme": "README.md",
   "storage": [
     {
-      "name": "HOLO/Project_Sophia/APP.JS",
-      "url": "assets/APP.JS"
+      "name": "HOLO/PROJECT_SOPHIA/APP.JS",
+      "url": "assets/APP.MIN.JS"
     },
     {
-      "name": "HOLO/Project_Sophia/YES_MAN_CONFIG.JSON",
-      "url": "assets/YES_MAN_CONFIG.JSON"
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_ROUTER.JS",
+      "url": "assets/SOPHIA_ROUTER.MIN.JS"
     },
     {
-      "name": "HOLO/Project_Sophia/YES_MAN_PLAY.WAV",
-      "url": "assets/YES_MAN_PLAY.WAV"
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_VOICE_ENGINE.JS",
+      "url": "assets/SOPHIA_VOICE_ENGINE.MIN.JS"
     },
     {
-      "name": "HOLO/Project_Sophia/YES_MAN_SERVICE.JS",
-      "url": "assets/YES_MAN_SERVICE.JS"
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_CONFIG.JSON",
+      "url": "assets/SOPHIA_CONFIG.JSON"
     },
     {
-      "name": "HOLO/Project_Sophia/YES_MAN_VOICE.BIN",
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_PLAY.WAV",
+      "url": "assets/SOPHIA_PLAY.WAV"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_STATUS.BIN",
+      "url": "assets/SOPHIA_STATUS.BIN"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_STATUS.IDX",
+      "url": "assets/SOPHIA_STATUS.IDX"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_ENG.BIN",
+      "url": "assets/SOPHIA_ENG.BIN"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/SOPHIA_ENG.IDX",
+      "url": "assets/SOPHIA_ENG.IDX"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/YES_MAN_VOICE.IDX",
+      "url": "assets/YES_MAN_VOICE.IDX"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/FISTO_VOICE.IDX",
+      "url": "assets/FISTO_VOICE.IDX"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/KL-E-O_VOICE.IDX",
+      "url": "assets/KL-E-O_VOICE.IDX"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/MK_II_STEALTH_SUIT_VOICE.IDX",
+      "url": "assets/MK_II_STEALTH_SUIT_VOICE.IDX"
+    },
+    {
+      "name": "HOLO/PROJECT_SOPHIA/ANDY_VOICE.IDX",
+      "url": "assets/ANDY_VOICE.IDX"
+    }
+  ],
+  "storageOptional": [
+    {
+      "label": "YES MAN Voice Pack",
+      "name": "HOLO/PROJECT_SOPHIA/YES_MAN_VOICE.BIN",
+      "sizeKB": 6712,
       "url": "assets/YES_MAN_VOICE.BIN"
     },
     {
-      "name": "HOLO/Project_Sophia/YES_MAN_VOICE.IDX",
-      "url": "assets/YES_MAN_VOICE.IDX"
+      "label": "FISTO Voice Pack",
+      "name": "HOLO/PROJECT_SOPHIA/FISTO_VOICE.BIN",
+      "sizeKB": 5594,
+      "url": "assets/FISTO_VOICE.BIN"
+    },
+    {
+      "label": "KL-E-O Voice Pack",
+      "name": "HOLO/PROJECT_SOPHIA/KL-E-O_VOICE.BIN",
+      "sizeKB": 7378,
+      "url": "assets/KL-E-O_VOICE.BIN"
+    },
+    {
+      "label": "MK II Stealth Suit Voice Pack",
+      "name": "HOLO/PROJECT_SOPHIA/MK_II_STEALTH_SUIT_VOICE.BIN",
+      "sizeKB": 8108,
+      "url": "assets/MK_II_STEALTH_SUIT_VOICE.BIN"
+    },
+    {
+      "label": "Andy / Mister Handy Voice Pack",
+      "name": "HOLO/PROJECT_SOPHIA/ANDY_VOICE.BIN",
+      "sizeKB": 7836,
+      "url": "assets/ANDY_VOICE.BIN"
     }
-  ],
-  "storageOptional": []
+  ]
 }

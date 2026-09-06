@@ -1,32 +1,9 @@
-# S.O.P.H.I.A. — Companion Pip-Boy Framework
+# Project S.O.P.H.I.A. v1.0.0 — Detached Router / Activation Fix
 
-PROJECT S.O.P.H.I.A. / YES MAN, ANDY, FISTO, KL-E-O and MK II Stealth Suit CURRENT RULES
-  
-- Uses a separate compact 51-line voice bank for each character. 
-- Maximum 3 voice responses per supported menu visit. 
-- First response is targeted for about 3 seconds after entering a menu.
-- After response 1 and response 2, the next response uses a fresh random 1–30 second delay.
-- Leaving a menu and returning resets that menu's response sequence.  
-- MAP silent. STATUS RAD silent. RADIO/FM silent. Other active audio/video blocks playback and does not consume the 3-response limit.
+This build keeps the v2.3.0 low-memory direction but replaces its wake callback architecture.
 
-Menus with Yes Man voice lines:
+The persistent router is compiled independently from APP.JS, so it cannot keep the S.O.P.H.I.A. UI closure alive after the holotape closes. Its mode/menuX event callback no longer shares the same 0/1 argument values that were previously used as start/stop commands. This removes a race where normal firmware mode values could accidentally stop or re-arm S.O.P.H.I.A.
 
-- Weapons
-- Apparel
-- Aid
-- Misc
-- Ammo
-- SPECIAL
-- Skills
-- Perks
-- General
-- CND
-- EFF
-- CLK
-- ENG
-- Quests
-- Notes
-- Fallout: New Vegas mode switch
-- Fallout 3 mode switch
+MISC and other holotapes keep the transient voice engine destroyed. The router has no timer while blocked. When the user returns to a supported firmware page, it loads the saved companion automatically after navigation settles.
 
-HOLO/Project_Sophia
+All five companions and the combined STATUS/ENG banks are preserved. Hardware testing on firmware 1.1.6 is required before calling this stable.
