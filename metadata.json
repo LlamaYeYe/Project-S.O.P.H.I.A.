@@ -3,7 +3,7 @@
   "name": "S.O.P.H.I.A.",
   "author": "@LlamaYeYe",
   "version": "1.0.0",
-  "description": "Detached-router low-RAM build. Fixes the auto-resume event/command collision and prevents the persistent wake callback from retaining the S.O.P.H.I.A. UI closure. Voice engine remains absent in MISC/other holotapes and auto-resumes on supported firmware pages.",
+  "description": "Low-memory companion voice framework for the Wand Company Pip-Boy 3000. Supports YES MAN, FISTO, KL-E-O, MK II Stealth Suit, and Andy / Mister Handy with contextual voices across supported Pip-Boy menus, STATUS navigation, and Fallout 3/New Vegas mode switching.",
   "icon": "assets/icon.png",
   "previews": [],
   "type": "app",
