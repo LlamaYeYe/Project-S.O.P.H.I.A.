@@ -1,301 +1,510 @@
-(function(f, b, C) {
-    let sb = 0, eb = 0, t = 0, p = 0, n = 0, d = 0, oa = 0, pu = 0, A = 1, gm = 0, mp = -1;
+(function(fs, appPath, companionId) {
+    let statusBankBase = 0,
+        engBankBase = 0,
+        pollTimer = 0,
+        activeContextKey = 0,
+        responseIndex = 0,
+        nextResponseAt = 0,
+        ownsAudio = 0,
+        audioUntil = 0,
+        active = 1,
+        currentNewVegas = 0,
+        pendingModeVoice = -1;
+
     try {
-        gm = !!NV
-    } catch (x) {
+        currentNewVegas = !!NV
+    } catch (error) {
     }
-    if (C === "FISTO") {
-        sb = 12;
-        eb = 3
-    } else if (C === "KL-E-O") {
-        sb = 24;
-        eb = 6
-    } else if (C === "MK_II_STEALTH_SUIT") {
-        sb = 36;
-        eb = 9
-    } else if (C === "ANDY") {
-        sb = 48;
-        eb = 12
+
+    if (companionId === "FISTO") {
+        statusBankBase = 12;
+        engBankBase = 3
+    } else if (companionId === "KL-E-O") {
+        statusBankBase = 24;
+        engBankBase = 6
+    } else if (companionId === "MK_II_STEALTH_SUIT") {
+        statusBankBase = 36;
+        engBankBase = 9
+    } else if (companionId === "ANDY") {
+        statusBankBase = 48;
+        engBankBase = 12
     }
-    function q() {
-        let m = Pip.MODE | 0, x = Pip.MENUX | 0, z = 0;
-        if (m === 1) {
-            if (x === 0) return 1;
-            if (x === 1) return 2;
-            if (x === 2) return 3;
-            if (x === 4) return 5;
+
+    function getContextKey() {
+        let mode = Pip.MODE | 0,
+            menuX = Pip.MENUX | 0,
+            statusIndex = 0;
+
+        if (mode === 1) {
+            if (menuX === 0) return 1;
+            if (menuX === 1) return 2;
+            if (menuX === 2) return 3;
+            if (menuX === 4) return 5;
             return 0
         }
-        if (m === 0) {
-            if (x === 0) {
+
+        if (mode === 0) {
+            if (menuX === 0) {
                 try {
-                    z = Pip.statusIdx | 0
-                } catch (y) {
+                    statusIndex = Pip.statusIdx | 0
+                } catch (error) {
                 }
-                if (z === 1) return 0;
-                if (z === 2) return 11;
-                if (z === 3) return 12;
-                if (z === 4) return 13;
+
+                /*
+                 * STATUS:
+                 * 0 CND -> key 10
+                 * 1 RAD -> intentionally silent
+                 * 2 EFF -> key 11
+                 * 3 CLK -> key 12
+                 * 4 ENG -> key 13
+                 */
+                if (statusIndex === 1) return 0;
+                if (statusIndex === 2) return 11;
+                if (statusIndex === 3) return 12;
+                if (statusIndex === 4) return 13;
+
                 return 10
             }
-            if (x === 1) return 6;
-            if (x === 2) return 7;
-            if (x === 3) return 8;
-            if (x === 4) return 9
+
+            if (menuX === 1) return 6;
+            if (menuX === 2) return 7;
+            if (menuX === 3) return 8;
+            if (menuX === 4) return 9
         }
-        if (m === 2) {
-            if (x === 2) return 14;
-            if (x === 3) return 15
+
+        if (mode === 2) {
+            if (menuX === 2) return 14;
+            if (menuX === 3) return 15
         }
+
         return 0
     }
-    function gs() {
+
+    function isGameSettings() {
         try {
             return (Pip.MODE | 0) === 2 && (Pip.MENUX | 0) === 0
-        } catch (x) {
+        } catch (error) {
         }
+
         return 0
     }
-    function U(s, i) {
-        return (s.charCodeAt(i) & 255) + ((s.charCodeAt(i + 1) & 255) << 8) + ((s.charCodeAt(i + 2) & 255) << 16) + ((s.charCodeAt(i + 3) & 255) * 16777216)
+
+    function readUInt32LE(data, offset) {
+        return (data.charCodeAt(offset) & 255) +
+            ((data.charCodeAt(offset + 1) & 255) << 8) +
+            ((data.charCodeAt(offset + 2) & 255) << 16) +
+            ((data.charCodeAt(offset + 3) & 255) * 16777216)
     }
-    function L(v) {
-        return String.fromCharCode(v & 255, v >> 8 & 255)
+
+    function writeUInt16LE(value) {
+        return String.fromCharCode(
+            value & 255,
+            value >> 8 & 255
+        )
     }
-    function D(v) {
-        return String.fromCharCode(v & 255, v >> 8 & 255, v >> 16 & 255, Math.floor(v / 16777216) & 255)
+
+    function writeUInt32LE(value) {
+        return String.fromCharCode(
+            value & 255,
+            value >> 8 & 255,
+            value >> 16 & 255,
+            Math.floor(value / 16777216) & 255
+        )
     }
-    function c0() {
-        if (t) {
-            clearTimeout(t);
-            t = 0
+
+    function clearPollTimer() {
+        if (pollTimer) {
+            clearTimeout(pollTimer);
+            pollTimer = 0
         }
     }
-    function a0() {
-        if (oa) try {
-            if (!Pip.sleeping && Pip.audioStop) Pip.audioStop()
-        } catch (x) {
-        }
-        oa = 0;
-        pu = 0
-    }
-    function ext() {
-        try {
-            return Pip.radioOn || global.__PipRadioActive || (!oa && ((Pip.audioIsPlaying && Pip.audioIsPlaying()) || (Pip.streamPlaying && Pip.streamPlaying()))) ? 1: 0
-        } catch (x) {
-        }
-        return 0
-    }
-    function z(ms) {
-        c0();
-        if (A) t = setTimeout(g, ms)
-    }
-    function pr(line, st, key) {
-        let I, O, S, o, l, ix = line - 1, BN = C + "_VOICE.BIN", IN = C + "_VOICE.IDX", v, w;
-        if (st >= 10) {
-            ix = eb + st - 10;
-            BN = "SOPHIA_ENG.BIN";
-            IN = "SOPHIA_ENG.IDX"
-        } else if (st) {
-            ix = sb + st - 1;
-            BN = "SOPHIA_STATUS.BIN";
-            IN = "SOPHIA_STATUS.IDX"
-        }
-        if (!A || key !== q() || Pip.sleeping || Pip.menuChanging) return 0;
-        try {
-            I = E.openFile(b + IN, "r");
-            I.seek(ix * 8);
-            S = I.read(8);
-            if (I.close) I.close();
-            I = 0;
-            if (!S || S.length < 8) return 0;
-            o = U(S, 0);
-            l = U(S, 4);
-            if (!l) return 0;
-            I = E.openFile(b + BN, "r");
-            O = E.openFile(b + "SOPHIA_PLAY.WAV", "w");
-            if (!I || !O) throw 0;
-            I.seek(o);
-            O.write("RIFF" + D(l + 36) + "WAVEfmt " + D(16) + L(1) + L(1) + D(16000) + D(32000) + L(2) + L(16) + "data" + D(l));
-            v = l;
-            while (v > 0) {
-                w = I.read(v > 1024 ? 1024: v);
-                if (!w || !w.length) throw 0;
-                O.write(w);
-                v -= w.length
+
+    function stopOwnedAudio() {
+        if (ownsAudio) {
+            try {
+                if (!Pip.sleeping && Pip.audioStop) Pip.audioStop()
+            } catch (error) {
             }
-            if (I.close) I.close();
-            if (O.close) O.close();
-            I = O = 0;
-            if (!A || key !== q()) return 0;
-            pu = getTime() + l / 32000 + .7;
-            oa = 1;
-            Pip.audioStart(b + "SOPHIA_PLAY.WAV");
+        }
+
+        ownsAudio = 0;
+        audioUntil = 0
+    }
+
+    function externalAudioActive() {
+        try {
+            return Pip.radioOn ||
+                global.__PipRadioActive ||
+                (!ownsAudio &&
+                    ((Pip.audioIsPlaying && Pip.audioIsPlaying()) ||
+                        (Pip.streamPlaying && Pip.streamPlaying()))) ?
+                1 :
+                0
+        } catch (error) {
+        }
+
+        return 0
+    }
+
+    function schedulePoll(delayMs) {
+        clearPollTimer();
+
+        if (active) pollTimer = setTimeout(pollVoiceState, delayMs)
+    }
+
+    function prepareAndPlay(lineNumber, statusOffset, contextKey) {
+        let inputFile,
+            outputFile,
+            indexEntry,
+            byteOffset,
+            byteLength,
+            index = lineNumber - 1,
+            bankName = companionId + "_VOICE.BIN",
+            indexName = companionId + "_VOICE.IDX",
+            bytesRemaining,
+            chunk;
+
+        if (statusOffset >= 10) {
+            index = engBankBase + statusOffset - 10;
+            bankName = "SOPHIA_ENG.BIN";
+            indexName = "SOPHIA_ENG.IDX"
+        } else if (statusOffset) {
+            index = statusBankBase + statusOffset - 1;
+            bankName = "SOPHIA_STATUS.BIN";
+            indexName = "SOPHIA_STATUS.IDX"
+        }
+
+        if (!active ||
+            contextKey !== getContextKey() ||
+            Pip.sleeping ||
+            Pip.menuChanging) {
+            return 0
+        }
+
+        try {
+            inputFile = E.openFile(appPath + indexName, "r");
+            inputFile.seek(index * 8);
+            indexEntry = inputFile.read(8);
+
+            if (inputFile.close) inputFile.close();
+            inputFile = 0;
+
+            if (!indexEntry || indexEntry.length < 8) return 0;
+
+            byteOffset = readUInt32LE(indexEntry, 0);
+            byteLength = readUInt32LE(indexEntry, 4);
+
+            if (!byteLength) return 0;
+
+            inputFile = E.openFile(appPath + bankName, "r");
+            outputFile = E.openFile(appPath + "SOPHIA_PLAY.WAV", "w");
+
+            if (!inputFile || !outputFile) throw 0;
+
+            inputFile.seek(byteOffset);
+
+            outputFile.write(
+                "RIFF" +
+                writeUInt32LE(byteLength + 36) +
+                "WAVEfmt " +
+                writeUInt32LE(16) +
+                writeUInt16LE(1) +
+                writeUInt16LE(1) +
+                writeUInt32LE(16000) +
+                writeUInt32LE(32000) +
+                writeUInt16LE(2) +
+                writeUInt16LE(16) +
+                "data" +
+                writeUInt32LE(byteLength)
+            );
+
+            bytesRemaining = byteLength;
+
+            while (bytesRemaining > 0) {
+                chunk = inputFile.read(bytesRemaining > 1024 ? 1024 : bytesRemaining);
+
+                if (!chunk || !chunk.length) throw 0;
+
+                outputFile.write(chunk);
+                bytesRemaining -= chunk.length
+            }
+
+            if (inputFile.close) inputFile.close();
+            if (outputFile.close) outputFile.close();
+
+            inputFile = outputFile = 0;
+
+            if (!active || contextKey !== getContextKey()) return 0;
+
+            audioUntil = getTime() + byteLength / 32000 + .7;
+            ownsAudio = 1;
+
+            Pip.audioStart(appPath + "SOPHIA_PLAY.WAV");
+
             return 1
-        } catch (x) {
+        } catch (error) {
             try {
-                if (I && I.close) I.close()
-            } catch (y) {
+                if (inputFile && inputFile.close) inputFile.close()
+            } catch (closeError) {
             }
+
             try {
-                if (O && O.close) O.close()
-            } catch (y) {
+                if (outputFile && outputFile.close) outputFile.close()
+            } catch (closeError) {
             }
+
             return 0
         }
     }
-    function g() {
-        let k, l, st = 0, mx, w, nvNow = gm;
-        t = 0;
-        if (!A) return;
+
+    function pollVoiceState() {
+        let contextKey,
+            lineNumber,
+            statusOffset = 0,
+            maxResponses,
+            currentTime,
+            newVegasNow = currentNewVegas;
+
+        pollTimer = 0;
+
+        if (!active) return;
+
         try {
             if (Pip.sleeping || Pip.menuChanging) {
-                oa = 0;
-                pu = 0;
-                z(1800);
+                ownsAudio = 0;
+                audioUntil = 0;
+                schedulePoll(1800);
                 return
             }
-            if (gs()) {
+
+            if (isGameSettings()) {
                 try {
-                    nvNow = !!NV
-                } catch (y) {
+                    newVegasNow = !!NV
+                } catch (error) {
                 }
-                if (nvNow !== gm) {
-                    gm = nvNow;
-                    mp = gm ? 1: 0;
-                    oa = 0;
-                    pu = 0
+
+                if (newVegasNow !== currentNewVegas) {
+                    currentNewVegas = newVegasNow;
+                    pendingModeVoice = currentNewVegas ? 1 : 0;
+                    ownsAudio = 0;
+                    audioUntil = 0
                 }
-                p = 0;
-                n = 0;
-                d = 0;
-                if (oa && getTime() < pu) {
-                    z(Math.max(300, Math.floor((pu - getTime() + .1) * 1000)));
+
+                activeContextKey = 0;
+                responseIndex = 0;
+                nextResponseAt = 0;
+
+                if (ownsAudio && getTime() < audioUntil) {
+                    schedulePoll(
+                        Math.max(
+                            300,
+                            Math.floor((audioUntil - getTime() + .1) * 1000)
+                        )
+                    );
                     return
                 }
-                if (oa) {
-                    oa = 0;
-                    pu = 0
+
+                if (ownsAudio) {
+                    ownsAudio = 0;
+                    audioUntil = 0
                 }
-                if (mp < 0) {
-                    z(300);
+
+                if (pendingModeVoice < 0) {
+                    schedulePoll(300);
                     return
                 }
-                if (ext()) {
-                    z(500);
+
+                if (externalAudioActive()) {
+                    schedulePoll(500);
                     return
                 }
-                l = mp ? 45 + Math.randInt(4): 49 + Math.randInt(3);
-                if (pr(l, 0, 0)) {
-                    mp = -1;
-                    z(Math.max(700, Math.floor((pu - getTime() + .15) * 1000)))
-                } else z(1200);
+
+                lineNumber = pendingModeVoice ?
+                    45 + Math.randInt(4) :
+                    49 + Math.randInt(3);
+
+                if (prepareAndPlay(lineNumber, 0, 0)) {
+                    pendingModeVoice = -1;
+                    schedulePoll(
+                        Math.max(
+                            700,
+                            Math.floor((audioUntil - getTime() + .15) * 1000)
+                        )
+                    )
+                } else {
+                    schedulePoll(1200)
+                }
+
                 return
             }
-            k = q();
-            if (!k) {
-                p = 0;
-                n = 0;
-                d = 0;
+
+            contextKey = getContextKey();
+
+            if (!contextKey) {
+                activeContextKey = 0;
+                responseIndex = 0;
+                nextResponseAt = 0;
+
+                /*
+                 * RAD is intentionally silent, but remain alive while still
+                 * in STATUS so moving onward to EFF / CLK / ENG is detected.
+                 */
                 try {
-                    if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) z(300)
-                } catch (y) {
+                    if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) {
+                        schedulePoll(300)
+                    }
+                } catch (error) {
                 }
+
                 return
             }
-            if (k !== p) {
-                a0();
-                p = k;
-                n = 0;
-                d = getTime() + (k === 13?.25: 1)
+
+            if (contextKey !== activeContextKey) {
+                stopOwnedAudio();
+                activeContextKey = contextKey;
+                responseIndex = 0;
+                nextResponseAt = getTime() + (contextKey === 13 ? .25 : 1)
             }
-            if (oa && getTime() < pu) {
-                z(Math.max(300, Math.floor((pu - getTime() + .1) * 1000)));
+
+            currentTime = getTime();
+
+            if (ownsAudio && currentTime < audioUntil) {
+                schedulePoll(
+                    Math.max(
+                        300,
+                        Math.floor((audioUntil - currentTime + .1) * 1000)
+                    )
+                );
                 return
             }
-            if (oa) {
-                oa = 0;
-                pu = 0
+
+            if (ownsAudio) {
+                ownsAudio = 0;
+                audioUntil = 0
             }
-            if (ext()) {
-                z(1200);
+
+            if (externalAudioActive()) {
+                schedulePoll(1200);
                 return
             }
-            mx = k === 15 ? 2: 3;
-            if (n >= mx) {
-                if (k >= 10 && k <= 13) z(700);
+
+            maxResponses = contextKey === 15 ? 2 : 3;
+
+            if (responseIndex >= maxResponses) {
+                if (contextKey >= 10 && contextKey <= 13) schedulePoll(700);
                 return
             }
-            if (getTime() < d) {
-                z(Math.max(200, Math.floor((d - getTime()) * 1000)));
+
+            if (currentTime < nextResponseAt) {
+                schedulePoll(
+                    Math.max(
+                        200,
+                        Math.floor((nextResponseAt - currentTime) * 1000)
+                    )
+                );
                 return
             }
-            if (k >= 10 && k <= 13) {
-                st = (k - 10) * 3 + 1 + n;
-                l = 1
-            } else l = (k - 1) * 3 + 1 + n;
-            n++;
-            d = getTime() + 12;
-            if (pr(l, st, k)) z(Math.max(700, Math.floor((pu - getTime() + .15) * 1000)));
-            else z(1200)
-        } catch (x) {
-            z(1500)
+
+            if (contextKey >= 10 && contextKey <= 13) {
+                statusOffset = (contextKey - 10) * 3 + 1 + responseIndex;
+                lineNumber = 1
+            } else {
+                lineNumber = (contextKey - 1) * 3 + 1 + responseIndex
+            }
+
+            responseIndex++;
+            nextResponseAt = getTime() + 12;
+
+            if (prepareAndPlay(lineNumber, statusOffset, contextKey)) {
+                schedulePoll(
+                    Math.max(
+                        700,
+                        Math.floor((audioUntil - getTime() + .15) * 1000)
+                    )
+                )
+            } else {
+                schedulePoll(1200)
+            }
+        } catch (error) {
+            schedulePoll(1500)
         }
     }
-    function nav() {
-        let k = 0;
-        if (!A) return;
+
+    function handleNavigation() {
+        let contextKey = 0;
+
+        if (!active) return;
+
         try {
             if (Pip.sleeping || Pip.menuChanging) {
-                z(1800);
+                schedulePoll(1800);
                 return
             }
-            if (gs()) {
-                c0();
-                a0();
-                p = 0;
-                n = 0;
-                d = 0;
-                z(300);
+
+            if (isGameSettings()) {
+                clearPollTimer();
+                stopOwnedAudio();
+                activeContextKey = 0;
+                responseIndex = 0;
+                nextResponseAt = 0;
+                schedulePoll(300);
                 return
             }
-            k = q()
-        } catch (x) {
+
+            contextKey = getContextKey()
+        } catch (error) {
         }
-        if (!k) {
-            c0();
-            a0();
-            p = 0;
-            n = 0;
-            d = 0;
+
+        if (!contextKey) {
+            clearPollTimer();
+            stopOwnedAudio();
+            activeContextKey = 0;
+            responseIndex = 0;
+            nextResponseAt = 0;
+
+            /*
+             * Keep polling only for the intentionally silent STATUS RAD page.
+             */
             try {
-                if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) z(300)
-            } catch (y) {
+                if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) {
+                    schedulePoll(300)
+                }
+            } catch (error) {
             }
+
             return
         }
-        if (k !== p) {
-            a0();
-            p = 0;
-            n = 0;
-            d = 0
+
+        if (contextKey !== activeContextKey) {
+            stopOwnedAudio();
+            activeContextKey = 0;
+            responseIndex = 0;
+            nextResponseAt = 0
         }
-        z(300)
+
+        schedulePoll(300)
     }
-    function destroy() {
-        if (!A) return;
-        A = 0;
-        c0();
-        a0();
+
+    function destroyVoiceEngine() {
+        if (!active) return;
+
+        active = 0;
+
+        clearPollTimer();
+        stopOwnedAudio();
+
         try {
             E.defrag()
-        } catch (x) {
+        } catch (error) {
         }
     }
-    const api = {
-        nav: nav,
-        destroy: destroy
+
+    const voiceEngineApi = {
+        nav: handleNavigation,
+        destroy: destroyVoiceEngine
     };
-    z(300);
-    return api
+
+    schedulePoll(300);
+
+    return voiceEngineApi
 });
