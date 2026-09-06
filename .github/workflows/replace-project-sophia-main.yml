@@ -28,14 +28,26 @@ jobs:
           rm -rf /tmp/project_sophia_release
           mkdir -p /tmp/project_sophia_release
           unzip -q /tmp/Project_SOPHIA-main.zip -d /tmp/project_sophia_release
-          test -d /tmp/project_sophia_release/ProjectSophia
+          echo "Archive contents:"
+          find /tmp/project_sophia_release -maxdepth 2 -type f | head -40
 
       - name: Replace repository files
         shell: bash
         run: |
           set -euo pipefail
+          src="/tmp/project_sophia_release"
+          first_dir="$(find "$src" -mindepth 1 -maxdepth 1 -type d | head -n1 || true)"
+          if [ -n "$first_dir" ] && [ -f "$first_dir/metadata.json" ]; then
+            src="$first_dir"
+          fi
+          test -f "$src/metadata.json"
+          test -f "$src/APP.JS"
+          test -f "$src/SOPHIA_ROUTER.JS"
+          test -f "$src/SOPHIA_VOICE_ENGINE.JS"
+          test -d "$src/assets"
+
           find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          cp -a /tmp/project_sophia_release/ProjectSophia/. .
+          cp -a "$src"/. .
           git status --short
 
       - name: Commit replacement
