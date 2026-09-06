@@ -1,0 +1,47 @@
+name: Delete old Project S.O.P.H.I.A. releases
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/delete-old-project-sophia-releases.yml
+
+permissions:
+  contents: write
+
+jobs:
+  delete-old-releases:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old releases only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="LlamaYeYe/Project-S.O.P.H.I.A."
+          for release_id in             378809606             378186187             377523910             377330902             376834700             376774057             376729564
+          do
+            echo "Deleting release ID $release_id"
+            gh api --method DELETE "repos/$repo/releases/$release_id"
+          done
+
+      - name: Remove this temporary workflow
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Commit workflow cleanup
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/delete-old-project-sophia-releases.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Remove temporary release cleanup workflow [skip ci]"
+          git push origin HEAD:main
