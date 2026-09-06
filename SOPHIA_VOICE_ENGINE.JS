@@ -340,12 +340,21 @@
             contextKey = getContextKey();
 
             if (!contextKey) {
+                /*
+                 * RAD is intentionally silent. If a STATUS response is still
+                 * playing, stop only S.O.P.H.I.A.-owned audio as soon as the
+                 * low-overhead STATUS poll detects RAD.
+                 */
                 stopOwnedAudio();
 
                 activeContextKey = 0;
                 responseIndex = 0;
                 nextResponseAt = 0;
 
+                /*
+                 * Remain alive while still in STATUS so moving onward to
+                 * EFF / CLK / ENG is detected without leaving STATUS.
+                 */
                 try {
                     if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) {
                         schedulePoll(300)
@@ -418,6 +427,11 @@
 
             if (prepareAndPlay(lineNumber, statusOffset, contextKey)) {
                 if (contextKey >= 10 && contextKey <= 13) {
+                    /*
+                     * STATUS sub-pages change Pip.statusIdx without emitting
+                     * mode/menuX. Recheck during playback so entering RAD
+                     * stops the owned voice instead of waiting for the WAV.
+                     */
                     schedulePoll(200)
                 } else {
                     schedulePoll(
@@ -468,6 +482,9 @@
             responseIndex = 0;
             nextResponseAt = 0;
 
+            /*
+             * Keep polling only for the intentionally silent STATUS RAD page.
+             */
             try {
                 if ((Pip.MODE | 0) === 0 && (Pip.MENUX | 0) === 0) {
                     schedulePoll(300)
@@ -490,7 +507,9 @@
 
     function destroyVoiceEngine() {
         if (!active) return;
+
         active = 0;
+
         clearPollTimer();
         stopOwnedAudio()
     }
@@ -501,5 +520,6 @@
     };
 
     schedulePoll(300);
+
     return voiceEngineApi
 });
