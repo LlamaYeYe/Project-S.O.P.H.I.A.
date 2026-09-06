@@ -1,15 +1,8 @@
 v1.0.0
-- Reworked Project S.O.P.H.I.A. around a detached low-memory router and transient voice engine.
-- Preserved the five companion voice packs: YES MAN, FISTO, KL-E-O, MK II Stealth Suit, and Andy / Mister Handy.
-- Removed MISC companion speech so S.O.P.H.I.A. stays out of the holotape launch area.
-- Added shared STATUS and ENG voice banks to reduce duplication in individual companion packs.
-- Added contextual voices for Weapons, Apparel, Aid, Ammo, SPECIAL, Skills, Perks, General, Quests, Notes, CND, EFF, CLK, and ENG.
-- RAD remains intentionally silent while STATUS polling continues through it, allowing EFF, CLK, and ENG voices to trigger normally without leaving STATUS.
-- Added Fallout 3 / Fallout: New Vegas mode-change companion responses while allowing the stock theme audio to finish first.
-- Added sleep/wake and menu-transition guards so voice extraction, playback, and router loading do not run during Pip-Boy power/menu transitions.
-- Kept the bounded low-memory activation retry and 1 KB streamed voice extraction used by the hardware-tested runtime.
-- Replaced cryptic one-letter names in the readable APP, router, and voice-engine source with descriptive identifiers.
-- Added comments around detached loading, STATUS/RAD behavior, and the F3/NV mode-change path.
-- Added BUILD.md documenting conservative minification, Espruino mangling cautions for eval-loaded modules, and the PRETOKENISE=2 build step.
-- Kept the optimized assets/APP.MIN.JS, assets/SOPHIA_ROUTER.MIN.JS, and assets/SOPHIA_VOICE_ENGINE.MIN.JS runtime files separate from the readable source.
-- Public project version is v1.0.0.
+- Five selectable companion voice packs: YES MAN, FISTO, KL-E-O, MK II Stealth Suit, and Andy / Mister Handy.
+- Contextual companion voices across supported ITEMS, STATS, STATUS, and DATA menus.
+- Smooth handoff when leaving the S.O.P.H.I.A. holotape or switching Pip-Boy sections.
+- STATUS RAD remains silent and stops active S.O.P.H.I.A. speech while allowing normal STATUS navigation.
+- Fallout 3 / Fallout: New Vegas mode-change companion responses in DATA > Settings.
+- Detached low-memory router and transient voice-engine architecture.
+- Readable source files with separate compact device runtime files.
