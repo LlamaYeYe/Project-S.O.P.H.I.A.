@@ -1,6 +1,6 @@
 # Project S.O.P.H.I.A. v1.0.0
 
-Project S.O.P.H.I.A. is a low-memory companion voice framework for the Wand Company Pip-Boy 3000 running firmware 1.1.6.
+Project S.O.P.H.I.A. is a companion voice framework for the Wand Company Pip-Boy 3000 with five selectable companions and contextual voices across supported menus.
 
 The current architecture separates the holotape UI from a detached navigation router and a transient voice engine:
 
