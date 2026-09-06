@@ -1,171 +1,254 @@
 (function() {
-    const f = require("fs"), b = "HOLO/PROJECT_SOPHIA/";
-    let t = 0, a = 1, en = 0, c = "YES_MAN", r = 0;
+    const fs = require("fs"),
+        appPath = "HOLO/PROJECT_SOPHIA/";
+
+    let pendingTimer = 0,
+        active = 1,
+        enabled = 0,
+        companionId = "YES_MAN",
+        retryCount = 0;
+
     try {
-        let j = JSON.parse(f.readFileSync(b + "SOPHIA_CONFIG.JSON"));
-        en = j.enabled ? 1: 0;
-        c = String(j.companion || "YES_MAN").toUpperCase()
-    } catch (x) {
+        let config = JSON.parse(fs.readFileSync(appPath + "SOPHIA_CONFIG.JSON"));
+        enabled = config.enabled ? 1 : 0;
+        companionId = String(config.companion || "YES_MAN").toUpperCase()
+    } catch (error) {
     }
-    function m() {
+
+    function isMisc() {
         try {
             return (Pip.MODE | 0) === 1 && (Pip.MENUX | 0) === 3
-        } catch (x) {
+        } catch (error) {
         }
+
         return 0
     }
-    function s() {
-        let q = -1, x = -1;
+
+    function isSupportedPage() {
+        let mode = -1,
+            menuX = -1;
+
         try {
-            q = Pip.MODE | 0;
-            x = Pip.MENUX | 0
-        } catch (y) {
+            mode = Pip.MODE | 0;
+            menuX = Pip.MENUX | 0
+        } catch (error) {
             return 0
         }
-        return q === 0 && x >= 0 && x < 5 || q === 1 && (x < 3 || x === 4) || q === 2 && (x === 2 || x === 3)
+
+        return mode === 0 && menuX >= 0 && menuX < 5 ||
+            mode === 1 && (menuX < 3 || menuX === 4) ||
+            mode === 2 && (menuX === 2 || menuX === 3)
     }
-    function h() {
+
+    function isCustomApp() {
         try {
-            return!!(Pip.CURRENT && Pip.CURRENT.notDefault)
-        } catch (x) {
+            return !!(Pip.CURRENT && Pip.CURRENT.notDefault)
+        } catch (error) {
         }
+
         return 1
     }
-    function sl() {
+
+    function isTransitioning() {
         try {
-            return!!(Pip.sleeping || Pip.menuChanging)
-        } catch (x) {
+            return !!(Pip.sleeping || Pip.menuChanging)
+        } catch (error) {
         }
+
         return 1
     }
-    function gs() {
+
+    function isGameSettings() {
         try {
             return (Pip.MODE | 0) === 2 && (Pip.MENUX | 0) === 0
-        } catch (x) {
+        } catch (error) {
         }
+
         return 0
     }
-    function ct() {
-        if (t) {
-            clearTimeout(t);
-            t = 0
+
+    function clearPendingTimer() {
+        if (pendingTimer) {
+            clearTimeout(pendingTimer);
+            pendingTimer = 0
         }
     }
-    function de() {
-        let q = global.__SE;
-        if (q && q.destroy) try {
-            q.destroy()
-        } catch (x) {
+
+    function destroyVoiceEngine() {
+        let voiceEngine = global.__SE;
+
+        if (voiceEngine && voiceEngine.destroy) {
+            try {
+                voiceEngine.destroy()
+            } catch (error) {
+            }
         }
+
         global.__SE = 0;
+
         try {
             E.defrag()
-        } catch (x) {
+        } catch (error) {
         }
     }
-    function load() {
-        let q, g, mem;
-        t = 0;
-        if (!a || !en || global.__PipCoSophiaUi || m() || h() || !s() || global.__SE) return;
-        if (sl()) {
-            t = setTimeout(load, 1800);
+
+    function loadVoiceEngine() {
+        let sourceCode,
+            engineFactory,
+            memory;
+
+        pendingTimer = 0;
+
+        if (!active ||
+            !enabled ||
+            global.__PipCoSophiaUi ||
+            isMisc() ||
+            isCustomApp() ||
+            !isSupportedPage() ||
+            global.__SE) {
             return
         }
+
+        if (isTransitioning()) {
+            pendingTimer = setTimeout(loadVoiceEngine, 1800);
+            return
+        }
+
         try {
-            mem = process.memory();
-            if (mem && mem.free < 2750) {
-                if (r++ < 2) t = setTimeout(load, 2200);
+            memory = process.memory();
+
+            if (memory && memory.free < 2750) {
+                if (retryCount++ < 2) {
+                    pendingTimer = setTimeout(loadVoiceEngine, 2200)
+                }
                 return
             }
-            r = 0;
+
+            retryCount = 0;
+
             try {
                 E.defrag()
-            } catch (x) {
+            } catch (error) {
             }
-            q = f.readFileSync(b + "SOPHIA_VOICE_ENGINE.JS");
-            g = Function("return " + q) ();
-            q = 0;
-            global.__SE = g(f, b, c);
-            g = 0;
+
+            sourceCode = fs.readFileSync(appPath + "SOPHIA_VOICE_ENGINE.JS");
+            engineFactory = Function("return " + sourceCode) ();
+            sourceCode = 0;
+
+            global.__SE = engineFactory(fs, appPath, companionId);
+            engineFactory = 0;
+
             if (global.__SE && global.__SE.nav) global.__SE.nav()
-        } catch (x) {
+        } catch (error) {
             global.__SE = 0;
+
             try {
                 E.defrag()
-            } catch (y) {
+            } catch (defragError) {
             }
-            if (r++ < 1) t = setTimeout(load, 2600)
+
+            if (retryCount++ < 1) {
+                pendingTimer = setTimeout(loadVoiceEngine, 2600)
+            }
         }
     }
-    function ev() {
-        if (!a) return;
-        if (sl()) {
-            ct();
-            t = setTimeout(ev, 1800);
+
+    function onNavigationChange() {
+        if (!active) return;
+
+        if (isTransitioning()) {
+            clearPendingTimer();
+            pendingTimer = setTimeout(onNavigationChange, 1800);
             return
         }
-        if (global.__PipCoSophiaUi || m() || h() || !en) {
-            ct();
-            r = 0;
-            de();
+
+        if (global.__PipCoSophiaUi || isMisc() || isCustomApp() || !enabled) {
+            clearPendingTimer();
+            retryCount = 0;
+            destroyVoiceEngine();
             return
         }
-        if (gs()) {
-            ct();
-            r = 0;
-            if (global.__SE && global.__SE.nav) try {
-                global.__SE.nav()
-            } catch (x) {
-                de()
+
+        /*
+         * DATA > Settings is not a normal three-line voice context.
+         * An already-running engine is allowed to stay alive there only so
+         * it can detect an actual Fallout 3 / New Vegas mode change.
+         */
+        if (isGameSettings()) {
+            clearPendingTimer();
+            retryCount = 0;
+
+            if (global.__SE && global.__SE.nav) {
+                try {
+                    global.__SE.nav()
+                } catch (error) {
+                    destroyVoiceEngine()
+                }
             }
+
             return
         }
-        if (!s()) {
-            ct();
-            r = 0;
-            de();
+
+        if (!isSupportedPage()) {
+            clearPendingTimer();
+            retryCount = 0;
+            destroyVoiceEngine();
             return
         }
+
         if (global.__SE) {
             try {
                 global.__SE.nav()
-            } catch (x) {
-                de()
+            } catch (error) {
+                destroyVoiceEngine()
             }
+
             return
         }
-        ct();
-        t = setTimeout(load, 850)
+
+        clearPendingTimer();
+        pendingTimer = setTimeout(loadVoiceEngine, 850)
     }
-    function kick() {
-        ev()
+
+    function kickRouter() {
+        onNavigationChange()
     }
-    function die() {
-        if (!a) return;
-        a = 0;
-        ct();
-        de();
+
+    function shutdownRouter() {
+        if (!active) return;
+
+        active = 0;
+
+        clearPendingTimer();
+        destroyVoiceEngine();
+
         try {
-            Pip.removeListener("mode", ev);
-            Pip.removeListener("menuX", ev)
-        } catch (x) {
+            Pip.removeListener("mode", onNavigationChange);
+            Pip.removeListener("menuX", onNavigationChange)
+        } catch (error) {
         }
-        if (global.__SR === api) global.__SR = 0
+
+        if (global.__SR === routerApi) global.__SR = 0
     }
-    const api = {
-        kick: kick,
-        die: die
+
+    const routerApi = {
+        kick: kickRouter,
+        die: shutdownRouter
     };
-    global.__SR = api;
-    if (!en) {
-        a = 0;
+
+    global.__SR = routerApi;
+
+    if (!enabled) {
+        active = 0;
         global.__SR = 0;
         return 0
     }
+
     try {
-        Pip.on("mode", ev);
-        Pip.on("menuX", ev)
-    } catch (x) {
+        Pip.on("mode", onNavigationChange);
+        Pip.on("menuX", onNavigationChange)
+    } catch (error) {
     }
-    return api
+
+    return routerApi
 });
