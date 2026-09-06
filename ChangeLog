@@ -1,22 +1,15 @@
-1.0.0
-- Rebuilt directly from the user's mostly-working v2.3.1 Fisto-all-voices beautified baseline.
-- Added only the previously successful sleep/wake safety guards so S.O.P.H.I.A. does not extract audio, stop audio, or reload its router while the Pip-Boy is sleeping/waking or changing menus.
-- Added F3/NV mode-line handling without changing the original voice-context map: Items, Status, Notes, and Quests retain their original keys and behavior.
-- DATA > Settings is not added to q() and is not treated as a normal three-line voice category; an already-running engine is only kept alive there to observe a real NV/F3 change.
-- On a mode change S.O.P.H.I.A. does not call audioStop(), so the stock F3/NV theme can finish; the matching companion mode line is then played after stock audio is no longer active.
-- No v2.3.5/v2.3.6 DATA recovery, timing-window, memory-threshold, or broad router changes were carried forward.
-- Voice BIN/IDX/WAV assets, Fisto loudness, UI, normal menu mappings, memory threshold, and retry counts remain from v2.3.1.
-
-v2.3.1
-- Detached the persistent wake/router from the APP.JS lexical scope to release UI memory after closing S.O.P.H.I.A.
-- Fixed mode/menuX event values being confused with old wake start/stop commands.
-- Router has no timer in MISC or while another holotape is active.
-- Added bounded low-memory retry for first voice-engine activation.
-- Voice engine no longer owns mode/menuX listeners.
-- Preserved v2.3.0 synchronous 1 KB voice extraction, five companions, no MISC audio, and combined STATUS/ENG banks.
-
-v2.3.1 source-format packaging update
-- Beautified all normal JavaScript source files in beautifier.io/js-beautify style.
-- Kept compact device runtime files as .MIN.JS.
-- metadata.json installs those .MIN.JS files under the exact same on-device .JS names.
-- No runtime logic, voice data, offsets, Fisto loudness changes, timers, thresholds, paths, or memory footprint changed.
+v1.0.0
+- Reworked Project S.O.P.H.I.A. around a detached low-memory router and transient voice engine.
+- Preserved the five companion voice packs: YES MAN, FISTO, KL-E-O, MK II Stealth Suit, and Andy / Mister Handy.
+- Removed MISC companion speech so S.O.P.H.I.A. stays out of the holotape launch area.
+- Added shared STATUS and ENG voice banks to reduce duplication in individual companion packs.
+- Added contextual voices for Weapons, Apparel, Aid, Ammo, SPECIAL, Skills, Perks, General, Quests, Notes, CND, EFF, CLK, and ENG.
+- RAD remains intentionally silent while STATUS polling continues through it, allowing EFF, CLK, and ENG voices to trigger normally without leaving STATUS.
+- Added Fallout 3 / Fallout: New Vegas mode-change companion responses while allowing the stock theme audio to finish first.
+- Added sleep/wake and menu-transition guards so voice extraction, playback, and router loading do not run during Pip-Boy power/menu transitions.
+- Kept the bounded low-memory activation retry and 1 KB streamed voice extraction used by the hardware-tested runtime.
+- Replaced cryptic one-letter names in the readable APP, router, and voice-engine source with descriptive identifiers.
+- Added comments around detached loading, STATUS/RAD behavior, and the F3/NV mode-change path.
+- Added BUILD.md documenting conservative minification, Espruino mangling cautions for eval-loaded modules, and the PRETOKENISE=2 build step.
+- Kept the optimized assets/APP.MIN.JS, assets/SOPHIA_ROUTER.MIN.JS, and assets/SOPHIA_VOICE_ENGINE.MIN.JS runtime files separate from the readable source.
+- Public project version is v1.0.0.
