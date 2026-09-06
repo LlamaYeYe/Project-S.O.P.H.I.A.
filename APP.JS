@@ -1,162 +1,310 @@
 (function() {
-    const f = require("fs"), b = "HOLO/PROJECT_SOPHIA/", cp = ["YES_MAN", "FISTO", "KL-E-O", "MK_II_STEALTH_SUIT", "ANDY"], nm = ["YES MAN", "FISTO", "KL-E-O", "MK II Stealth Suit", "Andy - Mister Handy"], L = Function("global.__SLT=0;try{if(Pip.sleeping||Pip.menuChanging){global.__SLT=setTimeout(global.__SLF,1800);return}if(global.__PipCoSophiaUi||global.__SR){global.__SLF=0;return}var f=require('fs'),s=f.readFileSync('HOLO/PROJECT_SOPHIA/SOPHIA_ROUTER.JS'),q=Function('return '+s)(),r=q();s=q=0;global.__SLF=0;if(r&&r.kick)r.kick()}catch(e){global.__SLF=0;try{E.defrag()}catch(x){}} ");
-    let e = 0, a = "YES_MAN", s = 0, u = -1, c = 0;
-    function R() {
+    const fs = require("fs"),
+        appPath = "HOLO/PROJECT_SOPHIA/",
+        companionIds = [
+            "YES_MAN",
+            "FISTO",
+            "KL-E-O",
+            "MK_II_STEALTH_SUIT",
+            "ANDY"
+        ],
+        companionNames = [
+            "YES MAN",
+            "FISTO",
+            "KL-E-O",
+            "MK II Stealth Suit",
+            "Andy - Mister Handy"
+        ],
+        /*
+         * This loader is intentionally compiled with Function().
+         * That keeps the persistent router outside the APP.JS closure so
+         * the holotape UI can be reclaimed after remove().
+         *
+         * The tiny locals inside this string intentionally mirror the
+         * compact, hardware-tested detached loader.
+         */
+        detachedRouterLoader = Function(
+            "global.__SLT=0;" +
+            "try{" +
+            "if(Pip.sleeping||Pip.menuChanging){" +
+            "global.__SLT=setTimeout(global.__SLF,1800);" +
+            "return" +
+            "}" +
+            "if(global.__PipCoSophiaUi||global.__SR){" +
+            "global.__SLF=0;" +
+            "return" +
+            "}" +
+            "var f=require('fs')," +
+            "s=f.readFileSync('HOLO/PROJECT_SOPHIA/SOPHIA_ROUTER.JS')," +
+            "q=Function('return '+s)()," +
+            "r=q();" +
+            "s=q=0;" +
+            "global.__SLF=0;" +
+            "if(r&&r.kick)r.kick()" +
+            "}catch(e){" +
+            "global.__SLF=0;" +
+            "try{E.defrag()}catch(x){}" +
+            "}"
+        );
+
+    let enabled = 0,
+        activeCompanion = "YES_MAN",
+        menuSelection = 0,
+        selectedCompanionIndex = -1,
+        removed = 0;
+
+    function defragMemory() {
         try {
             E.defrag()
-        } catch (x) {
+        } catch (error) {
         }
     }
-    function N(v) {
-        v = String(v || "").toUpperCase();
-        if (v === "FISTO") return v;
-        if (v === "KL-E-O" || v === "KLEO") return "KL-E-O";
-        if (v === "MK_II_STEALTH_SUIT" || v === "MK II STEALTH SUIT") return "MK_II_STEALTH_SUIT";
-        if (v === "ANDY" || v.indexOf("MISTER HANDY") >= 0) return "ANDY";
+
+    function normalizeCompanion(companion) {
+        companion = String(companion || "").toUpperCase();
+
+        if (companion === "FISTO") return companion;
+        if (companion === "KL-E-O" || companion === "KLEO") return "KL-E-O";
+        if (companion === "MK_II_STEALTH_SUIT" || companion === "MK II STEALTH SUIT") {
+            return "MK_II_STEALTH_SUIT"
+        }
+        if (companion === "ANDY" || companion.indexOf("MISTER HANDY") >= 0) return "ANDY";
+
         return "YES_MAN"
     }
-    function C() {
+
+    function loadConfig() {
         try {
-            let j = JSON.parse(f.readFileSync(b + "SOPHIA_CONFIG.JSON"));
-            e = j.enabled ? 1: 0;
-            a = N(j.companion)
-        } catch (x) {
-            e = 0;
-            a = "YES_MAN"
+            let config = JSON.parse(fs.readFileSync(appPath + "SOPHIA_CONFIG.JSON"));
+            enabled = config.enabled ? 1 : 0;
+            activeCompanion = normalizeCompanion(config.companion)
+        } catch (error) {
+            enabled = 0;
+            activeCompanion = "YES_MAN"
         }
     }
-    function W(v, k) {
-        e = v ? 1: 0;
-        a = N(k);
+
+    function saveConfig(newEnabled, companion) {
+        enabled = newEnabled ? 1 : 0;
+        activeCompanion = normalizeCompanion(companion);
+
         try {
-            f.writeFileSync(b + "SOPHIA_CONFIG.JSON", '{"enabled":' + e + ',"companion":"' + a + '"}')
-        } catch (x) {
+            fs.writeFileSync(
+                appPath + "SOPHIA_CONFIG.JSON",
+                '{"enabled":' + enabled + ',"companion":"' + activeCompanion + '"}'
+            )
+        } catch (error) {
         }
     }
-    function B() {
+
+    function stopBackgroundServices() {
         try {
             if (global.__SLT) {
                 clearTimeout(global.__SLT);
                 global.__SLT = 0
             }
-        } catch (x) {
+        } catch (error) {
         }
+
         try {
             if (global.__SR && global.__SR.die) global.__SR.die()
-        } catch (x) {
+        } catch (error) {
         }
         global.__SR = 0;
+
         try {
             if (global.__SE && global.__SE.destroy) global.__SE.destroy()
-        } catch (x) {
+        } catch (error) {
         }
         global.__SE = 0;
         global.__SLF = 0;
-        R()
+
+        defragMemory()
     }
-    function A() {
-        if (!e) return;
+
+    function scheduleRouterStart() {
+        if (!enabled) return;
+
         try {
             if (global.__SLT) clearTimeout(global.__SLT)
-        } catch (x) {
+        } catch (error) {
         }
-        global.__SLF = L;
-        global.__SLT = setTimeout(L, 650)
+
+        global.__SLF = detachedRouterLoader;
+        global.__SLT = setTimeout(detachedRouterLoader, 650)
     }
-    function H() {
-        h.clear().setColor(3).setFontMonofonto16().setFontAlign(0, -1).drawString("S.O.P.H.I.A.", 240, 12).drawString("Speech-Optimized Personal Health & Information Assistant", 240, 38).drawLine(22, 62, 458, 62).setFontAlign(-1, -1)
+
+    function drawHeader() {
+        h.clear()
+            .setColor(3)
+            .setFontMonofonto16()
+            .setFontAlign(0, -1)
+            .drawString("S.O.P.H.I.A.", 240, 12)
+            .drawString(
+                "Speech-Optimized Personal Health & Information Assistant",
+                240,
+                38
+            )
+            .drawLine(22, 62, 458, 62)
+            .setFontAlign(-1, -1)
     }
-    function M() {
-        let i, y = 140;
-        u = -1;
-        if (s < 0 || s > 5) s = 0;
-        H();
-        h.drawString("Status: " + (e ? "Enabled": "Disabled"), 36, 72);
-        if (e) h.drawString("Active: " + nm[Math.max(0, cp.indexOf(a))], 36, 94);
-        for (i = 0; i < 5; i++) {
-            if (i === s) Pip.shadeBox(22, y - 4, 458, y + 22);
-            h.setColor(3).drawString(nm[i], 36, y);
-            y += 29
+
+    function drawMainMenu() {
+        let companionIndex,
+            rowY = 140;
+
+        selectedCompanionIndex = -1;
+
+        if (menuSelection < 0 || menuSelection > 5) menuSelection = 0;
+
+        drawHeader();
+
+        h.drawString("Status: " + (enabled ? "Enabled" : "Disabled"), 36, 72);
+
+        if (enabled) {
+            h.drawString(
+                "Active: " + companionNames[Math.max(0, companionIds.indexOf(activeCompanion))],
+                36,
+                94
+            )
         }
-        if (s === 5) Pip.shadeBox(22, y - 4, 458, y + 22);
-        h.setColor(3).drawString("< Back", 36, y)
+
+        for (companionIndex = 0; companionIndex < 5; companionIndex++) {
+            if (companionIndex === menuSelection) {
+                Pip.shadeBox(22, rowY - 4, 458, rowY + 22)
+            }
+
+            h.setColor(3).drawString(companionNames[companionIndex], 36, rowY);
+            rowY += 29
+        }
+
+        if (menuSelection === 5) Pip.shadeBox(22, rowY - 4, 458, rowY + 22);
+
+        h.setColor(3).drawString("< Back", 36, rowY)
     }
-    function S() {
-        let i, y = 146;
-        if (s < 0 || s > 2) s = 0;
-        H();
-        h.drawString(nm[u], 36, 74).drawString("Status: " + (e && a === cp[u] ? "Enabled": "Disabled"), 36, 100);
-        for (i = 0; i < 3; i++) {
-            if (i === s) Pip.shadeBox(22, y - 4, 458, y + 22);
-            h.setColor(3).drawString(i === 0 ? "Enable": i === 1 ? "Disable": "< Back", 36, y);
-            y += 36
+
+    function drawCompanionMenu() {
+        let optionIndex,
+            rowY = 146;
+
+        if (menuSelection < 0 || menuSelection > 2) menuSelection = 0;
+
+        drawHeader();
+
+        h.drawString(companionNames[selectedCompanionIndex], 36, 74)
+            .drawString(
+                "Status: " +
+                    (enabled && activeCompanion === companionIds[selectedCompanionIndex] ?
+                        "Enabled" :
+                        "Disabled"),
+                36,
+                100
+            );
+
+        for (optionIndex = 0; optionIndex < 3; optionIndex++) {
+            if (optionIndex === menuSelection) {
+                Pip.shadeBox(22, rowY - 4, 458, rowY + 22)
+            }
+
+            h.setColor(3).drawString(
+                optionIndex === 0 ?
+                    "Enable" :
+                    optionIndex === 1 ?
+                        "Disable" :
+                        "< Back",
+                36,
+                rowY
+            );
+
+            rowY += 36
         }
     }
-    function X() {
+
+    function exitToMisc() {
         try {
             Pip.changeMenu("MISC.JS")
-        } catch (x) {
+        } catch (error) {
             try {
                 Pip.changeMenu()
-            } catch (y) {
+            } catch (fallbackError) {
             }
         }
     }
-    function K(v) {
-        let n;
-        if (v) {
-            n = u < 0 ? 6: 3;
-            s += v > 0 ? 1: -1;
-            if (s < 0) s = n - 1;
-            if (s >= n) s = 0;
+
+    function onKnob1(direction) {
+        let optionCount;
+
+        if (direction) {
+            optionCount = selectedCompanionIndex < 0 ? 6 : 3;
+            menuSelection += direction > 0 ? 1 : -1;
+
+            if (menuSelection < 0) menuSelection = optionCount - 1;
+            if (menuSelection >= optionCount) menuSelection = 0;
+
             Pip.playSound("SCROLL");
-            u < 0 ? M() : S();
+
+            selectedCompanionIndex < 0 ? drawMainMenu() : drawCompanionMenu();
             return
         }
+
         Pip.playSound("SELECT");
-        if (u < 0) {
-            if (s === 5) {
-                X();
+
+        if (selectedCompanionIndex < 0) {
+            if (menuSelection === 5) {
+                exitToMisc();
                 return
             }
-            u = s;
-            s = 0;
-            S();
+
+            selectedCompanionIndex = menuSelection;
+            menuSelection = 0;
+            drawCompanionMenu();
             return
         }
-        if (s === 0) {
-            W(1, cp[u]);
-            S();
+
+        if (menuSelection === 0) {
+            saveConfig(1, companionIds[selectedCompanionIndex]);
+            drawCompanionMenu();
             return
         }
-        if (s === 1) {
-            W(0, cp[u]);
-            S();
+
+        if (menuSelection === 1) {
+            saveConfig(0, companionIds[selectedCompanionIndex]);
+            drawCompanionMenu();
             return
         }
-        s = u;
-        M()
+
+        menuSelection = selectedCompanionIndex;
+        drawMainMenu()
     }
-    function Z() {
-        if (c) return;
-        c = 1;
+
+    function removeApp() {
+        if (removed) return;
+        removed = 1;
+
         try {
-            Pip.removeListener("knob1", K)
-        } catch (x) {
+            Pip.removeListener("knob1", onKnob1)
+        } catch (error) {
         }
+
         global.__PipCoSophiaUi = 0;
-        R();
-        A()
+
+        defragMemory();
+        scheduleRouterStart()
     }
+
     global.__PipCoSophiaUi = 1;
-    B();
-    C();
-    Pip.onExclusive("knob1", K);
-    M();
+
+    stopBackgroundServices();
+    loadConfig();
+
+    Pip.onExclusive("knob1", onKnob1);
+
+    drawMainMenu();
+
     return {
         id: "SOPHIA",
         notDefault: true,
         fullscreen: true,
-        remove: Z
+        remove: removeApp
     }
 });
